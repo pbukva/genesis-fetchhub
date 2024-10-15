@@ -1,8 +1,17 @@
-# ASI Genesis Migration
+# ASI Migration Eridanus testnet fork from Dorado testnet
 
-This is a "genesis" upgrade, what means that a new eon will be started, and all history from the previous eon will
-be lost (it can be accessed from the archive node of the (previous) eon which will be ended by this upgrade).<br/>
-Only the chain's full state (at the upgrade halt block height) will be carried over to the new eon.
+The Eridanus testnet is ASI upgrade fork from Dorado testnet. Due to practical reasons, Eridanus testnet is supposed
+to be running imn parallel with Dorado testnet, with requirement that Dorado testnet must **not** be interrupted/stopped,
+hence the fork approach has been chosen instead of upgrading the Dorado testnet.
+
+The motivation for choosing the fork approach is, that there is a lot of infrastructure which depends on current Dorado
+testnet, and it is not desirable to abruptly force all this infrastructure/dependencies to upgrade immediately to the
+new ASI testnet, but rather allow generous transition period (a few months) during which Dorado testnet will remain
+running as-is parallely with newly ASI Eridanus testnet forked of Dorado testnet at specific block height, which allows
+the infrastructure/dependencies to adapt & test. 
+
+This is genesis upgrade, what means that a new eon will be started, and so Eridanus testnet will **NOT** carry any
+history from forked Dorado testnet.
 
 ## Prerequisites
 
@@ -11,9 +20,9 @@ Only the chain's full state (at the upgrade halt block height) will be carried o
 Ensure that the computer carrying out this operation meets the following resource requirements for a smooth migration
 process:
 
-- **Memory**: 16GB RAM
-- **CPU**: 4 cores on a local machine **or** 1 full core on the cloud
-- **Disk Space**: 2GB free space
+- **Memory**: at least 32GB RAM
+- **CPU**: at least 1 full CPU core (in terms of scheduling)
+- **Disk Space**: 6GB free space
 
 ### Assumptions
 For the purposes of this upgrade guide, it is assumed that your node's **HOME** directory is the default `~/.fetchd`.
@@ -23,22 +32,19 @@ in this guide in other contexts than just shell commands.
 > **IF** this assumption is **NOT** correct for your particular node setup, please **REPLACE** all occurrences of the 
 > `~/.fetchd` within this guide with a directory your node setup uses as its home directory.
 
-## 1. Wait for network halt 
+## 1. Determine if your node can be used for the FULL upgrade procedure 
 
-[//]: # (TODO: Replace HALT_BLOCK_HEIGHT and GOVERNANCE_PROPOSAL_NUMBER placeholders)
-
-When mainnet blockchain reaches the target upgrade block height `HALT_BLOCK_HEIGHT` defined by the ASI software upgrade
-governance proposal #GOVERNANCE_PROPOSAL_NUMBER, **ALL** nodes will automatically halt once they will reach this block
-height.
-
-It is **expected** to have an error logged by the node, similar to:
-
-[//]: # (TODO: Replace v0.12.XX and HALT_BLOCK_HEIGHT placeholders)
-
-```bash
-3:14PM ERR UPGRADE "v0.12.XX" NEEDED at height: HALT_BLOCK_HEIGHT: ASI Network Upgrade v0.12.XX (upgrade-info)
-3:14PM ERR CONSENSUS FAILURE!!! err="UPGRADE \"v0.12.XX\" NEEDED at height: HALT_BLOCK_HEIGHT"
+Eridanus ASI upgrade requires Dorado node which **\*has\*** the state for the `12440494` block height - this is
+controlled by the pruning settings of the node. 
+The following command can be executed in order to determine whether this is the case (`NODE_RPC_URL` must be replaced
+by the RPC url of the node in question):
+```shell
+fetchd --node NODE_RPC_URL --chain-id dorado-1 query bank balances --height 12440494 fetch17xpfvakm2amg962yls6f84z3kell8c5lry2yf2
 ```
+
+If the command above gives successful response, you can choose ANY of upgrade paths ([4.1. [\*EITHER\*] Simplified path](#41-either-simplified-path)
+**\*OR\*** [4.2. [\*OR\*] Execute the whole upgrade procedure locally](#42-or-execute-the-whole-upgrade-procedure-locally)), OTHERWISE (an error response) you are limited to, and must choose, the
+[4.1](#41-either-simplified-path) only.  
 
 ## 2. Stop the node
 
